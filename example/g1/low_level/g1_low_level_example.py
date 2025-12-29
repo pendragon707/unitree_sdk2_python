@@ -92,7 +92,7 @@ class Custom:
         self.msc.Init()
 
         status, result = self.msc.CheckMode()
-        while result['name']:
+        while result:
             self.msc.ReleaseMode()
             status, result = self.msc.CheckMode()
             time.sleep(1)
@@ -192,10 +192,12 @@ if __name__ == '__main__':
     print("WARNING: Please ensure there are no obstacles around the robot while running this example.")
     input("Press Enter to continue...")
 
-    if len(sys.argv)>1:
-        ChannelFactoryInitialize(0, sys.argv[1])
-    else:
-        ChannelFactoryInitialize(0)
+    # if len(sys.argv)>1:
+    #     ChannelFactoryInitialize(0, sys.argv[1])
+    # else:
+    #     ChannelFactoryInitialize(0)
+
+    ChannelFactoryInitialize(1)
 
     custom = Custom()
     custom.Init()
