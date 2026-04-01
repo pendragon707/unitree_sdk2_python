@@ -58,3 +58,7 @@ python g1_audio_realtime.py wlo1
 ```
 
 - **Record and send at the touch of a button**
+
+```bash
+python g1_audio_button_send wlo1
+```
