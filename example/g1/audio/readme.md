@@ -1,23 +1,60 @@
 ## Audio
 
-Connect the Unitree G1 and the PC using Ethernet. The interface (for example, eth0) must have an IP address in the same subnet as the robot (in my example, `192.168.123.222`). You can check the ip using command `ip addr show` or `ifconfig`.
+Connect the Unitree G1 and the PC using Ethernet. The interface (for example, eth0 or wlo1) must have an IP address in the same subnet as the robot (for example, `192.168.123.222`). You can check the ip using command `ip addr show` or `ifconfig`.
 
-- Live Voiceover Only (No file saved):
+1. Get audio from the robot's microphone 
+
+- **Live Voiceover Only (No file saved)**
 
 ```bash
-python g1_audio_mic_record_udp_voicover.py 192.168.123.222 
+python g1_audio_mic_record_udp_voicover.py wlo1
 ```
 
 You will hear the robot's microphone immediately through your computer speakers. 
 
-- Live Voiceover + Save to File (5 seconds):
+- **Live Voiceover + Save to File (5 seconds)**
 
 ```bash
-python g1_audio_mic_record_udp_voicover.py 192.168.123.222 5 /tmp/robot_voice.wav --live
+python g1_audio_mic_record_udp_voicover.py wlo1 5 /tmp/robot_voice.wav --live
 ```
 
-- Save only, no playback
+- **Save only, no playback**
 
 ```bash
-python g1_audio_mic_record_udp_voicover.py 192.168.123.222 5 /tmp/robot_voice.wav
+python g1_audio_mic_record_udp_voicover.py wlo1 5 /tmp/robot_voice.wav
 ```
+
+2. Send audio to the robot's speakers
+
+Install:
+
+```bash
+pip install sounddevice numpy
+```
+
+If the sound is not playing on the robot (test with g1_audio_client_play_wav.py), do the following (on robot`s PC2):
+
+```bash
+# Enable multicast routing
+sudo sysctl -w net.ipv4.conf.all.mc_forwarding=1
+
+# Allow IP forwarding
+sudo sysctl -w net.ipv4.ip_forward=1
+
+# Check firewall (disable temporarily for testing)
+sudo ufw disable
+```
+
+- **Send already recorded audio**
+
+```bash
+python g1_audio_client_play_wav.py wlo1 test.wav
+```
+
+- **Real-time (it doesn't work well.)**
+
+```bash
+python g1_audio_realtime.py wlo1
+```
+
+- **Record and send at the touch of a button**
