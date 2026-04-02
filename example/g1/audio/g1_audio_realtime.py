@@ -76,7 +76,7 @@ def main():
         ):
             # Keep running until Ctrl+C
             while streaming:
-                time.sleep(0.1)
+                time.sleep(0.2)
     except KeyboardInterrupt:
         print("\n[INFO] Stopping...")
         streaming = False

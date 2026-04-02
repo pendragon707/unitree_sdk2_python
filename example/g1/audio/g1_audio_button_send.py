@@ -1,6 +1,7 @@
 import sys
 import threading
 import pyaudio
+import time
 from unitree_sdk2py.core.channel import ChannelFactoryInitialize
 from unitree_sdk2py.g1.audio.g1_audio_client import AudioClient
 # Keep your existing local wav module for the play_pcm_stream function
@@ -40,7 +41,7 @@ def record_audio():
         while is_recording.is_set() or stream.is_active():
             if not is_recording.is_set() and not stream.is_active():
                 break
-            pyaudio.time.sleep(0.1)
+            time.sleep(0.1)
             
         stream.stop_stream()
         stream.close()
