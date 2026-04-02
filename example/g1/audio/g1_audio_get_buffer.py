@@ -31,7 +31,7 @@ HEADER_SIZE = 12 if USE_PACKET_HEADER else 0
 EXPECTED_PAYLOAD_SIZE = 512 * BYTES_PER_FRAME  # Adjust to match robot's chunk size
 
 # ============== STREAMING CONFIG ==============
-MULTICAST_GROUP = "239.168.123.161"
+MULTICAST_GROUP = "239.168.123.201"
 MULTICAST_PORT = 5555
 JITTER_BUFFER_SIZE = 50       # Packets: ~1.6s buffer at 32ms/packet (adjustable)
 PLAYBACK_BUFFER_MIN = 10      # Min packets before starting playback (avoid underrun)
@@ -126,6 +126,8 @@ class AudioReceiver:
     
     def _parse_packet(self, data: bytes):
         """Extract sequence number and PCM data from robot packet"""
+        print(f"[DEBUG] Packet: {len(data)} bytes, first 20: {data[:20].hex()}")
+
         if USE_PACKET_HEADER:
             if len(data) < HEADER_SIZE:
                 return None, None
