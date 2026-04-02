@@ -51,14 +51,8 @@ sudo ufw disable
 python g1_audio_client_play_wav.py wlo1 test.wav
 ```
 
-- **Real-time (it doesn't work well.)**
+- **Real-time**
 
 ```bash
-python g1_audio_realtime.py wlo1
-```
-
-- **Record and send at the touch of a button**
-
-```bash
-python g1_audio_button_send wlo1
+python g1_audio_send_buffer.py wlo1
 ```

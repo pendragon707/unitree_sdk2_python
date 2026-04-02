@@ -7,6 +7,7 @@ from unitree_sdk2py.core.channel import ChannelFactoryInitialize
 from unitree_sdk2py.g1.audio.g1_audio_client import AudioClient
 
 import pyaudio
+import numpy as np
 
 # Audio configuration (MUST match robot requirements)
 SAMPLE_RATE = 16000       # Hz - required by SDK
@@ -22,9 +23,9 @@ BUFFER_SIZE = 20          # Queue size: ~640ms of audio buffer for jitter absorp
 
 
 class AudioStreamer:
-    def __init__(self, net_interface: str):
-        self.net_interface = net_interface
-        self.audio_client = None
+    def __init__(self, audio_client):
+        # self.net_interface = net_interface
+        self.audio_client = audio_client
         self.stream_id = None
         self.running = False
         self.audio_queue = queue.Queue(maxsize=BUFFER_SIZE)
@@ -33,12 +34,6 @@ class AudioStreamer:
         
     def init_sdk(self):
         """Initialize Unitree SDK and AudioClient"""
-        ChannelFactoryInitialize(0, self.net_interface)
-        self.audio_client = AudioClient()
-        self.audio_client.SetTimeout(5.0)
-        if self.audio_client.Init() != 0:
-            raise RuntimeError("Failed to initialize AudioClient")
-        self.audio_client.SetVolume(100)
         # Generate persistent stream_id for continuous playback
         self.stream_id = f"stream_{int(time.time() * 1000)}"
         print(f"[INFO] SDK initialized, stream_id: {self.stream_id}")
@@ -46,6 +41,15 @@ class AudioStreamer:
     def _capture_callback(self, in_data, frame_count, time_info, status):
         """PyAudio callback: capture microphone data and queue it"""
         if self.running and not self.audio_queue.full():
+
+            if self.audio_queue.qsize() % 100 == 0:
+                # Check RMS of first 100 samples to detect silence                
+                samples = np.frombuffer(in_data[:200], dtype=np.int16)  # 100 samples
+                rms = np.sqrt(np.mean(samples**2))
+                if rms < 50:
+                    print(f"[WARN] Mic input seems silent (RMS={rms:.1f})")
+    
+
             self.audio_queue.put(in_data)
         return (None, pyaudio.paContinue)
     
@@ -54,12 +58,7 @@ class AudioStreamer:
         p = pyaudio.PyAudio()
         
         # Find input device (default or by name)
-        device_index = None
-        for i in range(p.get_device_count()):
-            dev_info = p.get_device_info_by_index(i)
-            if dev_info['maxInputChannels'] > 0 and 'microphone' in dev_info['name'].lower():
-                device_index = i
-                break
+        device_index = p.get_default_input_device_info()["index"]
         
         if device_index is None:
             print("[ERROR] No microphone input device found")
@@ -97,7 +96,7 @@ class AudioStreamer:
         while self.running:
             try:
                 # Non-blocking get with timeout to allow clean shutdown
-                chunk = self.audio_queue.get(timeout=0.1)
+                chunk = self.audio_queue.get(timeout=0.1)                
             except queue.Empty:
                 continue
                 
@@ -105,7 +104,8 @@ class AudioStreamer:
             ret_code, _ = self.audio_client.PlayStream(
                 STREAM_NAME, 
                 self.stream_id,  # Same ID = continuous playback!
-                list(chunk)       # Convert bytes to list[int] as SDK expects
+                chunk
+                # list(chunk)       # Convert bytes to list[int] as SDK expects
             )
             
             if ret_code != 0:
@@ -173,9 +173,16 @@ def main():
         sys.exit(1)
     
     net_interface = sys.argv[1]
+
+    ChannelFactoryInitialize(0, net_interface)
+    audioClient = AudioClient()
+    audioClient.SetTimeout(10.0)
+    audioClient.Init()
     
+    audioClient.SetVolume(130)
+
     try:
-        with AudioStreamer(net_interface) as streamer:
+        with AudioStreamer(audioClient) as streamer:
             print("[INFO] Streaming active. Press Ctrl+C to stop...")
             while True:
                 time.sleep(1)
